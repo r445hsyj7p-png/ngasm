@@ -51,7 +51,7 @@
     "ai": "^6.0.138",
     "ansi-to-react": "^6.2.6",
     "axios": "^1.15.2",
-    "better-auth": "^1.4.7",
+    "better-auth": "^1.6.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -91,8 +91,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
-    "@types/node": "^22.0.0",
     "@types/leaflet": "^1.9.21",
+    "@types/node": "^22.0.0",
     "@types/qs": "^6.14.0",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
