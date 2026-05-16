@@ -4,6 +4,51 @@ Basierend auf Analyse von `easm2` (Python/FastAPI/Celery) und `ngasm` (TypeScrip
 
 ---
 
+## Tool-Status Übersicht (alle 13 Tools)
+
+| Tool | Typ | Status | Stufe |
+|------|-----|--------|-------|
+| Subfinder | Binary | ✅ **Bereits integriert** | – |
+| Naabu | Binary | ✅ **Bereits integriert** | – |
+| HTTPX | Binary | ✅ **Bereits integriert** | – |
+| Screenshot (via Rod) | Go | ✅ **Bereits integriert** | – |
+| Nuclei | Binary | ✅ **Bereits integriert** | – |
+| theHarvester | Python | ❌ Fehlt – neu | Stufe 1d (neu) |
+| SSLyze | Python | ❌ Fehlt | Stufe 4a |
+| Ramparts | Python | ❌ Fehlt | Stufe 4c |
+| HIBP API | API | ❌ Fehlt | Stufe 3b |
+| GreyNoise | API | ❌ Fehlt | Stufe 3a |
+| AbuseIPDB | API | ❌ Fehlt | Stufe 3a |
+| AlienVault OTX | API | ❌ Fehlt | Stufe 3a |
+| MISP | API | ❌ Fehlt | Stufe 3a |
+| SpyOnWeb | API | ❌ Fehlt | Stufe 3a |
+
+**Korrekturen zum ursprünglichen Plan:**
+- Naabu ist bereits in `built-in-tools.ts` integriert – kein Hinzufügen nötig
+- Screenshots sind bereits via `ToolCategory.SCREENSHOT` + Go Rod implementiert – Stufe 4b entfällt
+- theHarvester fehlte im Konzept vollständig – wird als Stufe 1d ergänzt
+- SSLyze, Ramparts und theHarvester sind alle Python-Tools → gemeinsame Dockerfile-Strategie (siehe unten)
+
+### Python-Tools Dockerfile-Strategie
+
+Da SSLyze, theHarvester und Ramparts alle Python-basiert sind, werden sie **gemeinsam** in einem einzigen Dockerfile-Update installiert (nicht einzeln pro Stufe):
+
+```dockerfile
+# worker/Dockerfile – Stage 2 Runtime ergänzen:
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates bash chromium libpcap0.8 \
+    python3 python3-pip \                    # Neu
+    && pip3 install --no-cache-dir \
+       theHarvester \                        # Stufe 1d
+       sslyze \                              # Stufe 4a
+    && rm -rf /var/lib/apt/lists/*
+# Ramparts: Binary-Download via GitHub Releases (kein pip) – Stufe 4c
+```
+
+Diese Änderung am Dockerfile sollte **einmalig** vor Beginn von Stufe 1d vorgenommen werden.
+
+---
+
 ## Stufe 1 – Quick Wins
 
 ---
@@ -199,6 +244,113 @@ Target: example.com
 ```
 
 **Daten kommen aus:** `GET /job-registry/target/:targetId` aggregiert nach ToolCategory → Phase
+
+---
+
+### 1d. theHarvester – OSINT Integration (neu)
+
+**Was theHarvester liefert:**
+- E-Mail-Adressen (Google, Bing, LinkedIn, Hunter.io)
+- Subdomains aus passiven Quellen (50+ Engines)
+- LinkedIn-Mitarbeiternamen (für Social-Engineering-Awareness)
+- Virtuelle Hosts / Shadow-Domains
+- IP-Ranges über Shodan/Censys
+
+**Unterschied zu Subfinder:** Subfinder ist rein auf DNS-basierte Subdomain-Enumeration fokussiert. theHarvester ergänzt mit aktiven OSINT-Quellen und liefert E-Mails + Personendaten – andere Datenkategorie.
+
+#### Dockerfile-Voraussetzung
+Python3 + pip im Worker-Dockerfile (siehe gemeinsame Python-Strategie oben).
+
+#### Neues Tool in `built-in-tools.ts`
+
+```typescript
+{
+  name: 'theHarvester',
+  category: ToolCategory.OSINT,              // Neuer Enum-Wert (oder SUBDOMAINS)
+  description: 'OSINT tool for gathering emails, subdomains, hosts, and employee names from public sources.',
+  logoUrl: '/static/images/theharvester.png',
+  command: 'theHarvester -d {{value}} -b google,bing,baidu,yahoo,dnsdumpster,crtsh -f /tmp/harvest-{{jobId}} && cat /tmp/harvest-{{jobId}}.json',
+  parser: (result: string) => {
+    const data = JSON.parse(result);
+    return {
+      hosts: data.hosts ?? [],           // → neue Assets (Subdomains)
+      emails: data.emails ?? [],         // → neue OsintFindings
+      ips: data.ips ?? [],               // → neue Assets (IPs)
+      linkedin_people: data.linkedin_people ?? [],  // → neue OsintFindings
+    };
+  },
+  version: '4.x',
+  priority: JobPriority.LOW,
+}
+```
+
+#### Neuer ToolCategory-Wert
+```typescript
+// core-api/src/common/enums/enum.ts
+export enum ToolCategory {
+  SUBDOMAINS    = 'SUBDOMAINS',
+  HTTP_PROBE    = 'HTTP_PROBE',
+  PORTS_SCANNER = 'PORTS_SCANNER',
+  VULNERABILITIES = 'VULNERABILITIES',
+  SCREENSHOT    = 'SCREENSHOT',
+  OSINT         = 'OSINT',          // NEU – für theHarvester
+  TLS_ANALYSIS  = 'TLS_ANALYSIS',   // NEU (Stufe 4a)
+  MCP_VULN      = 'MCP_VULN',       // NEU (Stufe 4c)
+}
+```
+
+#### Neues Entity: `OsintFinding`
+
+theHarvester liefert Daten, die nicht in `Vulnerability` passen (E-Mails, Personen). Eigenes leichtgewichtiges Entity:
+
+```typescript
+// core-api/src/modules/osint/osint-finding.entity.ts  (NEU)
+@Entity('osint_findings')
+export class OsintFinding {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column()
+  targetId: string;
+
+  @Column({ type: 'enum', enum: OsintType })
+  type: OsintType;              // EMAIL | PERSON | VIRTUAL_HOST | IP_RANGE
+
+  @Column()
+  value: string;                // z.B. "admin@example.com" oder "Max Muster"
+
+  @Column({ nullable: true })
+  source: string;               // "google" | "linkedin" | "bing" etc.
+
+  @Column({ nullable: true })
+  context: string;              // Zusatzinfo (Job-Titel, Fundort)
+
+  @Column({ type: 'timestamp' })
+  discoveredAt: Date;
+}
+```
+
+#### Pipeline-Phase
+theHarvester läuft parallel zu Subfinder in **Phase P1 (Discovery)**:
+- Subfinder → DNS-basierte Subdomains
+- theHarvester → OSINT-Quellen (E-Mails, passive Subdomains, Personen)
+- Beide Ergebnisse fließen in Asset-Discovery ein
+
+#### API-Endpunkte (neues OSINT-Modul)
+```
+GET /osint/target/:targetId          → Alle OSINT-Findings für Target
+GET /osint/target/:targetId/emails   → Nur E-Mail-Findings
+GET /osint/target/:targetId/people   → Nur Personen-Findings
+```
+
+#### Frontend
+```
+console/src/pages/targets/components/
+└── osint-findings.tsx   // NEU – Tab in Target-Detail-View
+                          // Zeigt: E-Mails, Personen, Virtual Hosts
+```
+
+**Sicherheitshinweis:** LinkedIn-Scraping kann ToS-Verletzungen auslösen. Im UI prominenten Hinweis platzieren; LinkedIn-Source optional (per Config deaktivierbar).
 
 ---
 
@@ -596,21 +748,34 @@ console/src/pages/vulnerabilities/components/
 
 ---
 
-## Implementierungs-Reihenfolge (empfohlen)
+## Implementierungs-Reihenfolge (aktualisiert)
 
 ```
-Stufe 1a: Slack Notifications          ~2 Tage   (Backend + Frontend)
-Stufe 1c: Pipeline-Visualisierung      ~2 Tage   (nur Frontend + pipeline.types.ts)
-Stufe 4b: Screenshots                  ~2 Tage   (Go Worker + Frontend) ← einfach, hoher Nutzen
-Stufe 1b: Erweiterte Suche             ~4 Tage   (Parser + Frontend Token-Input)
-Stufe 3b: HIBP Check                   ~3 Tage   (NestJS Queue + Entity)
-Stufe 4a: SSLyze TLS                   ~4 Tage   (Dockerfile + Go Parser + Vuln-Typen)
-Stufe 3a: Intel-Modul (ohne MISP)      ~8 Tage   (NestJS Modul + 3 Provider + Frontend)
-Stufe 4c: Ramparts MCP-Analyse         ~4 Tage   (Dockerfile + Worker + Vuln-Typen)
-Stufe 3a: MISP-Integration             ~3 Tage   (Optional, eigene Instanz nötig)
-─────────────────────────────────────────────────
-Gesamt:                               ~32 Tage   (ca. 6–7 Wochen, 1 Entwickler)
+── Vorbereitung ──────────────────────────────────────────────────────
+Dockerfile Python-Update               ~0.5 Tage  Einmalig für alle Python-Tools
+
+── Stufe 1 ───────────────────────────────────────────────────────────
+Stufe 1a: Slack Notifications          ~2 Tage    Backend + Frontend
+Stufe 1c: Pipeline-Visualisierung      ~2 Tage    Nur Frontend + pipeline.types.ts
+Stufe 1d: theHarvester OSINT           ~4 Tage    Dockerfile + built-in-tools + OsintFinding Entity + Frontend
+Stufe 1b: Erweiterte Suche             ~4 Tage    QueryParser + Frontend Token-Input
+
+── Stufe 3 ───────────────────────────────────────────────────────────
+Stufe 3b: HIBP Check                   ~3 Tage    NestJS Queue + Entity + Notification-Hook
+Stufe 4a: SSLyze TLS                   ~4 Tage    built-in-tools + Go Output-Parser + Vuln-Typen
+Stufe 3a: Intel-Modul (3 Provider)     ~6 Tage    GreyNoise + AbuseIPDB + OTX, Intel-Frontend
+Stufe 3a: SpyOnWeb                     ~2 Tage    4. Provider im Intel-Modul
+Stufe 3a: MISP                         ~3 Tage    Optional, eigene MISP-Instanz nötig
+
+── Stufe 4 ───────────────────────────────────────────────────────────
+Stufe 4c: Ramparts MCP-Analyse         ~4 Tage    Binary-Download + built-in-tools + Vuln-Typen
+─────────────────────────────────────────────────────────────────────
+Gesamt:                               ~34.5 Tage  (ca. 7 Wochen, 1 Entwickler)
 ```
+
+**Entfallen (bereits implementiert):**
+- ~~Stufe 4b: Screenshots~~ → Rod + Screenshot-Tool bereits vollständig in ngasm
+- ~~Naabu hinzufügen~~ → bereits in built-in-tools.ts
 
 ---
 
