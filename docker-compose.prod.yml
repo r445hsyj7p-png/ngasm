@@ -1,0 +1,27 @@
+# Production overrides for docker-compose.yml
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+services:
+  console:
+    ports:
+      - '127.0.0.1:3000:80'
+
+  core-api:
+    ports:
+      - '127.0.0.1:6276:6276'
+    # gRPC port intentionally not exposed externally – workers connect via internal network
+
+  postgres:
+    ports:
+      - '127.0.0.1:5432:5432'
+
+  redis:
+    ports:
+      - '127.0.0.1:6379:6379'
+    # Override default insecure password – deploy.sh replaces __REDIS_PASSWORD__ at setup time
+    command: 'redis-server --requirepass __REDIS_PASSWORD__'
+    healthcheck:
+      test: ['CMD', 'redis-cli', '-a', '__REDIS_PASSWORD__', 'ping']
+
+  geo-ip:
+    ports:
+      - '127.0.0.1:4360:4360'
