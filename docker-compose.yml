@@ -8,7 +8,8 @@ services:
     networks:
       - oasm
     env_file:
-      - ./console/.env
+      - path: ./console/.env
+        required: false
     ports:
       - '3000:80'
     restart: 'always'
@@ -31,12 +32,20 @@ services:
     networks:
       - oasm
     env_file:
-      - ./core-api/.env
+      - path: ./core-api/.env
+        required: false
     ports:
       - '6276:6276'
       - '16276:16276'
     environment:
+      - PORT=6276
+      - GRPC_PORT=16276
       - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USERNAME=${POSTGRES_USERNAME:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-open_asm}
+      - POSTGRES_SSL=false
       - REDIS_URL=redis://:password@redis:6379/0
       - GEO_IP_URL=geo-ip:4360
       - OASM_CLOUD_APIKEY=change_me
@@ -58,9 +67,10 @@ services:
       - api-storage:/app/.storage:rw
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:6276/api/health']
-      interval: 1s
-      timeout: 30s
-      retries: 10
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 60s
 
   oasm-worker:
     image: oasm/oasm-worker:latest
@@ -68,7 +78,8 @@ services:
       context: ./worker
       dockerfile: Dockerfile
     env_file:
-      - ./worker/.env
+      - path: ./worker/.env
+        required: false
     environment:
       - WORKER_API_KEY=change_me
       - WORKER_GRPC_HOST=core-api
@@ -94,7 +105,8 @@ services:
     image: pgvector/pgvector:pg17
     restart: always
     env_file:
-      - ./core-api/.env
+      - path: ./core-api/.env
+        required: false
     environment:
       POSTGRES_USER: '${POSTGRES_USERNAME:-postgres}'
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
@@ -167,7 +179,8 @@ services:
     networks:
       - oasm
     env_file:
-      - ./core-api/.env
+      - path: ./core-api/.env
+        required: false
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
