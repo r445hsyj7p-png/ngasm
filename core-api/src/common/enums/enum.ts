@@ -26,6 +26,9 @@ export enum ToolCategory {
   SCREENSHOT = 'screenshot',
   CLASSIFIER = 'classifier',
   ASSISTANT = 'assistant',
+  OSINT = 'osint',
+  TLS_ANALYSIS = 'tls_analysis',
+  MCP_VULN = 'mcp_vuln',
 }
 
 /**
@@ -203,6 +206,9 @@ export const CATEGORY_DATA_SOURCE_MAP: Record<ToolCategory, DataSource> = {
   [ToolCategory.SCREENSHOT]: DataSource.ASSET_SERVICE,
   [ToolCategory.CLASSIFIER]: DataSource.ASSET,
   [ToolCategory.ASSISTANT]: DataSource.ASSET,
+  [ToolCategory.OSINT]: DataSource.ASSET,
+  [ToolCategory.TLS_ANALYSIS]: DataSource.ASSET_SERVICE,
+  [ToolCategory.MCP_VULN]: DataSource.ASSET_SERVICE,
 };
 
 export enum VulnerabilityAnalyzeStatus {

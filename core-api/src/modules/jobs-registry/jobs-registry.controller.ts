@@ -130,6 +130,24 @@ export class JobsRegistryController {
     return this.jobsRegistryService.getJobHistoryDetail(workspaceId, id);
   }
 
+  @Get('pipeline/:jobHistoryId')
+  @Doc({
+    summary: 'Get pipeline status',
+    description: 'Returns per-phase scan progress for a job history',
+  })
+  getPipelineStatus(@Param('jobHistoryId') jobHistoryId: string) {
+    return this.jobsRegistryService.getPipelineStatus(jobHistoryId);
+  }
+
+  @Get('target/:targetId/latest-history')
+  @Doc({
+    summary: 'Get latest job history for a target',
+    description: 'Returns the most recent job history ID for a given target',
+  })
+  getLatestJobHistoryForTarget(@Param('targetId') targetId: string) {
+    return this.jobsRegistryService.getLatestJobHistoryForTarget(targetId);
+  }
+
   @UseGuards(WorkspaceOwnerGuard)
   @Doc({
     summary: 'Re-run a job',

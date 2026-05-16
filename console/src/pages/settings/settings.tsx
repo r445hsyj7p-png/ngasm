@@ -6,6 +6,7 @@ import BrandNameAndLogoSettings from './components/brand-name-and-logo';
 import GetAboutProject from './components/get-about-project';
 import Preferences from './components/preferences';
 import SecuritySettings from './components/security-settings';
+import SlackConfigSettings from './components/slack-config';
 import WorkspaceSettings from './components/workspace-settings';
 
 interface TabContentProps {
@@ -116,6 +117,16 @@ export const settingsTabGroups: SettingsTabGroup[] = [
           description: 'Customize your brand name and logo',
         },
         component: <BrandNameAndLogoSettings />,
+      },
+      {
+        id: 'slack',
+        label: 'Slack',
+        path: '/settings/slack',
+        content: {
+          title: 'Slack Notifications',
+          description: 'Configure Slack webhook for vulnerability alerts',
+        },
+        component: <SlackConfigSettings />,
       },
       {
         id: 'about',

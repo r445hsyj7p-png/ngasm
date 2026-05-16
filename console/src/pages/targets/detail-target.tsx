@@ -17,12 +17,16 @@ import { ListAssets } from '../assets/list-assets';
 import { ListVulnerabilities } from '../vulnerabilities/list-vulnerabilitys';
 import VulnerabilitiesStatistic from '../vulnerabilities/vulnerabilites-statistic';
 import AssetsDiscovering from './assets-discovering';
+import { OsintFindings } from './components/osint-findings';
+import { PipelineProgress } from './components/pipeline-progress';
 import SettingTarget from './setting-target';
 
 // Define tabs configuration
 const TABS = [
   { value: 'inventory', label: 'Inventory' },
   { value: 'vulnerabilities', label: 'Vulnerabilities' },
+  { value: 'pipeline', label: 'Pipeline' },
+  { value: 'osint', label: 'OSINT' },
 ];
 
 export function DetailTarget() {
@@ -163,6 +167,12 @@ export function DetailTarget() {
         >
           <VulnerabilitiesStatistic targetId={target.id} />
           <ListVulnerabilities targetId={target.id} />
+        </TabsContent>
+        <TabsContent value="pipeline" className="py-3">
+          <PipelineProgress targetId={target.id} />
+        </TabsContent>
+        <TabsContent value="osint" className="py-3">
+          <OsintFindings targetId={target.id} />
         </TabsContent>
       </Tabs>
     </Page>

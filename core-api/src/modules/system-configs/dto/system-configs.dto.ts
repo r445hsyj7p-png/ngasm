@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
 
 /**
  * Response DTO for system configuration
@@ -10,6 +10,10 @@ export class SystemConfigResponseDto {
 
   @ApiProperty({ description: 'Path to system logo', nullable: true })
   logoPath?: string | null;
+
+  slackWebhookUrl?: string | null;
+  slackAlertThreshold?: string | null;
+  slackEnabled?: boolean;
 }
 
 /**
@@ -25,4 +29,19 @@ export class UpdateSystemConfigDto {
   @IsOptional()
   @IsString()
   logoPath?: string | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  slackWebhookUrl?: string | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  slackAlertThreshold?: string | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  slackEnabled?: boolean;
 }

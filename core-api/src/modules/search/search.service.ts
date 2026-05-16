@@ -12,6 +12,7 @@ import {
   SearchResponseDto,
 } from './dto/search.dto';
 import { SearchHistory } from './entities/search-history.entity';
+import { QueryParser } from './query-parser';
 
 /**
  * Service for managing search operations and search history.
@@ -20,6 +21,8 @@ import { SearchHistory } from './entities/search-history.entity';
  */
 @Injectable()
 export class SearchService {
+  private readonly queryParser = new QueryParser();
+
   constructor(
     @InjectRepository(SearchHistory)
     private readonly searchHistoryRepo: Repository<SearchHistory>,
@@ -28,6 +31,10 @@ export class SearchService {
     private readonly targetService: TargetsService,
     private readonly statisticService: StatisticService,
   ) {}
+
+  parseAdvancedQuery(query: string) {
+    return this.queryParser.parse(query);
+  }
 
   /**
    * Searches for assets and targets in a workspace based on the provided query.
@@ -81,6 +88,11 @@ export class SearchService {
       targets: targets.data || [],
     };
 
+    let parsedTokens = null;
+    if (query.advancedQuery) {
+      parsedTokens = this.queryParser.parse(query.advancedQuery);
+    }
+
     const response = {
       data: combinedResults,
       total: (assets.total || 0) + (targets.total || 0),
@@ -88,6 +100,7 @@ export class SearchService {
       limit: +query.limit,
       pageCount: Math.ceil((assets.total + targets.total) / query.limit),
       hasNextPage: query.page * query.limit < totalItems,
+      ...(parsedTokens ? { parsedQuery: parsedTokens } : {}),
     };
 
     if (query.isSaveHistory === true) {

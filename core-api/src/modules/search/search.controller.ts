@@ -1,4 +1,4 @@
-import { UserContext, WorkspaceId } from '@/common/decorators/app.decorator';
+import { Public, UserContext, WorkspaceId } from '@/common/decorators/app.decorator';
 import { Doc } from '@/common/doc/doc.decorator';
 import { GetManyResponseDto } from '@/utils/getManyResponse';
 import { Controller, Delete, Get, Param, Query } from '@nestjs/common';
@@ -17,6 +17,35 @@ import { SearchService } from './search.service';
 @Controller('search')
 export class SearchController {
   constructor(private readonly searchService: SearchService) {}
+
+  @Public()
+  @Get('syntax')
+  getSyntaxHelp() {
+    return {
+      filters: {
+        severity: { syntax: 'severity:critical,high', description: 'Filter by severity level' },
+        cvss: { syntax: 'cvss:>=9', description: 'CVSS score comparison (>=, <=, >, <, x..y)' },
+        epss: { syntax: 'epss:>=0.9', description: 'EPSS probability score' },
+        status: { syntax: 'status:open', description: 'Finding status' },
+        tool: { syntax: 'tool:nuclei', description: 'Source scanning tool' },
+        has: { syntax: 'has:cve', description: 'Presence check (cve, kev, ticket)' },
+        age: { syntax: 'age:<7', description: 'Age in days (< = newer than)' },
+        port: { syntax: 'port:6274', description: 'Port number filter' },
+        ip: { syntax: 'ip:10.0.0.0/24', description: 'IP address or CIDR range' },
+        subdomain: { syntax: 'subdomain:*.example.com', description: 'Subdomain pattern' },
+        cve: { syntax: 'cve:CVE-2024-3400', description: 'CVE identifier' },
+        cat: { syntax: 'cat:mcp', description: 'Finding category' },
+      },
+      examples: [
+        'severity:critical has:cve',
+        'tool:nuclei cvss:>=9 status:open',
+        'age:<7 severity:critical,high',
+        'cve:CVE-2024-3400',
+        'ip:10.0.0.0/24 port:443',
+      ],
+      negation: 'Prefix any filter with - to negate: -severity:info',
+    };
+  }
 
   @Doc({
     summary: 'Search assets and targets',

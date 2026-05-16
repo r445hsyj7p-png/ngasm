@@ -50,6 +50,7 @@ import {
 import { JobErrorLog } from './entities/job-error-log.entity';
 import { JobHistory } from './entities/job-history.entity';
 import { Job } from './entities/job.entity';
+import { CATEGORY_TO_PHASE, PHASE_META, PhaseStatus, ScanPhase } from './pipeline.types';
 
 @Injectable()
 export class JobsRegistryService {
@@ -68,7 +69,7 @@ export class JobsRegistryService {
   public async getManyJobs(
     query: GetManyJobsRequestDto,
   ): Promise<GetManyBaseResponseDto<Job>> {
-    const { limit, page, sortOrder, jobHistoryId, jobStatus, workspaceId } =
+    const { limit, page, sortOrder, jobHistoryId, jobStatus, workspaceId, targetId } =
       query;
     let { sortBy } = query;
 
@@ -98,6 +99,10 @@ export class JobsRegistryService {
         'workspaceTarget.workspaceId = :workspaceId',
         { workspaceId },
       );
+    }
+
+    if (targetId) {
+      qb.andWhere('asset.targetId = :targetId', { targetId });
     }
 
     qb.take(query.limit)
@@ -1087,5 +1092,52 @@ export class JobsRegistryService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  async getLatestJobHistoryForTarget(targetId: string): Promise<{ id: string } | null> {
+    const job = await this.repo.findOne({
+      where: { asset: { targetId } },
+      relations: ['jobHistory'],
+      order: { createdAt: 'DESC' },
+    });
+    return job?.jobHistory ? { id: job.jobHistory.id } : null;
+  }
+
+  async getPipelineStatus(jobHistoryId: string): Promise<PhaseStatus[]> {
+    const jobs = await this.repo.find({
+      where: { jobHistory: { id: jobHistoryId } },
+      relations: ['tool'],
+    });
+
+    const phases = Object.values(ScanPhase).map((phase) => {
+      const meta = PHASE_META[phase];
+      const phaseJobs = jobs.filter(
+        (j) => CATEGORY_TO_PHASE[j.category] === phase,
+      );
+      const completed = phaseJobs.filter((j) => j.status === JobStatus.COMPLETED).length;
+      const failed = phaseJobs.filter((j) => j.status === JobStatus.FAILED).length;
+      const inProgress = phaseJobs.filter((j) => j.status === JobStatus.IN_PROGRESS).length;
+
+      let status: PhaseStatus['status'] = 'not_available';
+      if (phaseJobs.length > 0) {
+        if (inProgress > 0) status = 'in_progress';
+        else if (failed > 0 && completed === 0) status = 'failed';
+        else if (completed === phaseJobs.length) status = 'completed';
+        else status = 'pending';
+      }
+
+      return {
+        phase,
+        label: meta.label,
+        tool: meta.tool,
+        order: meta.order,
+        status,
+        jobCount: phaseJobs.length,
+        completedCount: completed,
+        failedCount: failed,
+      } satisfies PhaseStatus;
+    });
+
+    return phases.sort((a, b) => a.order - b.order);
   }
 }

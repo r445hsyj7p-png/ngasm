@@ -1,3 +1,4 @@
+import { TokenInput } from '@/components/search/token-input';
 import {
   PaginationContent,
   PaginationEllipsis,
@@ -20,7 +21,7 @@ import * as React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 export default function Search() {
-  const [param] = useSearchParams();
+  const [param, setParam] = useSearchParams();
   const [page, setPage] = React.useState(1);
   const {
     state: { selectedWorkspaceId },
@@ -28,13 +29,27 @@ export default function Search() {
   const navigate = useNavigate();
 
   const searchQuery = param.get('query') as string;
+  const advancedQuery = param.get('advanced') ?? '';
+  const [inputValue, setInputValue] = React.useState(advancedQuery || searchQuery || '');
+
+  const handleSearch = (value: string) => {
+    const newParams = new URLSearchParams(param);
+    if (value !== searchQuery) {
+      newParams.set('query', value);
+    }
+    newParams.set('advanced', value);
+    setParam(newParams);
+    setPage(1);
+  };
 
   const { data, isFetching } = useSearchControllerSearchAssetsTargets({
     value: searchQuery,
     workspaceId: selectedWorkspaceId,
     page: page,
     isSaveHistory: true,
-  });
+    // advancedQuery is a new param not yet in generated types
+    ...( advancedQuery ? { advancedQuery } : {} ),
+  } as { value: string; workspaceId: string; page: number; isSaveHistory: boolean; advancedQuery?: string });
 
   if (isFetching) {
     return (
@@ -50,13 +65,20 @@ export default function Search() {
   return (
     <div className="p-6 space-y-6">
       <div className="rounded-lg border p-6">
-        <div className="flex items-center gap-3 mb-2">
+        <div className="flex items-center gap-3 mb-4">
           <SearchIcon className="h-6 w-6 text-blue-600" />
           <h1 className="text-2xl font-semibold">Search Results</h1>
         </div>
-        <div className="flex gap-2 ">
+        <TokenInput
+          value={inputValue}
+          onChange={setInputValue}
+          onSearch={handleSearch}
+          placeholder="Search assets, targets... (e.g. severity:critical cvss:>=9)"
+          className="mb-3"
+        />
+        <div className="flex gap-2 text-sm text-muted-foreground">
           <span>Query:</span>
-          <span className="font-bold">{searchQuery}</span>
+          <span className="font-bold text-foreground">{searchQuery}</span>
           <span>•</span>
           <span>{data?.total || 0} results found</span>
         </div>
