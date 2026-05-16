@@ -22,6 +22,8 @@ import { WorkersModule } from './workers/workers.module';
 import { WorkflowsModule } from './workflows/workflows.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
 import { AgentsModule } from './agents/agents.module';
+import { HibpModule } from './hibp/hibp.module';
+import { IntelModule } from './intel/intel.module';
 import { OsintModule } from './osint/osint.module';
 
 @Module({
@@ -52,6 +54,8 @@ import { OsintModule } from './osint/osint.module';
     InternalNetworksModule,
     AgentsModule,
     OsintModule,
+    IntelModule,
+    HibpModule,
   ],
 })
 export class CombineModule {}

@@ -42,14 +42,15 @@ export default function Search() {
     setPage(1);
   };
 
-  const { data, isFetching } = useSearchControllerSearchAssetsTargets({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const searchParams: any = {
     value: searchQuery,
     workspaceId: selectedWorkspaceId,
-    page: page,
+    page,
     isSaveHistory: true,
-    // advancedQuery is a new param not yet in generated types
-    ...( advancedQuery ? { advancedQuery } : {} ),
-  } as { value: string; workspaceId: string; page: number; isSaveHistory: boolean; advancedQuery?: string });
+    ...(advancedQuery ? { advancedQuery } : {}),
+  };
+  const { data, isFetching } = useSearchControllerSearchAssetsTargets(searchParams);
 
   if (isFetching) {
     return (

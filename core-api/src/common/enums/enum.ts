@@ -133,6 +133,14 @@ export enum BullMQName {
   JOB_RESULT = 'job-result',
   ISSUE_CREATION = 'issue-creation',
   VULNERABILITY_ANALYSIS = 'vulnerability-analysis',
+  INTEL_ENRICHMENT = 'intel-enrichment',
+  HIBP_CHECK = 'hibp-check',
+}
+
+export enum IntelSource {
+  GREYNOISE = 'greynoise',
+  ABUSEIPDB = 'abuseipdb',
+  ALIENVAULT_OTX = 'alienvault_otx',
 }
 
 export enum NotificationStatus {

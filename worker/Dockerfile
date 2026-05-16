@@ -35,7 +35,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
     python3-venv \
     && python3 -m venv /opt/venv \
-    && /opt/venv/bin/pip install --no-cache-dir theHarvester \
+    && /opt/venv/bin/pip install --no-cache-dir theHarvester sslyze \
     && rm -rf /var/lib/apt/lists/*
 
 ENV PATH="/opt/venv/bin:$PATH"
