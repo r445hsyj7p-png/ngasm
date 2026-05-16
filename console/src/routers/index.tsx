@@ -37,6 +37,7 @@ import Targets from '@/pages/targets/targets';
 import ToolDetail from '@/pages/tools/components/tool-detail';
 import Tools from '@/pages/tools/tools';
 import DetailVulnerability from '@/pages/vulnerabilities/detail-vulnerability';
+import IntelPage from '@/pages/intel/intel';
 import Vulnerabilities from '@/pages/vulnerabilities/vulnerabilities';
 import Workers from '@/pages/workers/workers';
 import Workspaces from '@/pages/workspaces';
@@ -189,6 +190,23 @@ export const router = createBrowserRouter([
                     ),
                   },
                 ],
+              },
+            ],
+          },
+          {
+            path: 'intel',
+            children: [
+              {
+                index: true,
+                element: <Navigate to="reputation" replace />,
+              },
+              {
+                path: ':tab',
+                element: (
+                  <RequireWorkspace>
+                    <IntelPage />
+                  </RequireWorkspace>
+                ),
               },
             ],
           },

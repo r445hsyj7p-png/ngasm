@@ -182,4 +182,34 @@ export const builtInTools: Tool[] = [
     version: '4.x',
     priority: JobPriority.LOW,
   },
+  {
+    name: 'sslyze',
+    category: ToolCategory.TLS_ANALYSIS,
+    description:
+      'SSLyze is a fast and comprehensive SSL/TLS scanner. It detects outdated protocols, weak ciphers, certificate issues, and missing security headers like HSTS.',
+    logoUrl: '/static/images/sslyze.png',
+    command: 'sslyze --json_out=- {{value}}',
+    parser: (result: string) => {
+      try {
+        const data = JSON.parse(result);
+        const scanResult = data?.server_scan_results?.[0];
+        if (!scanResult) return {};
+        return {
+          certInfo: scanResult.scan_commands_results?.certificate_info ?? {},
+          tlsVersions: {
+            ssl2: scanResult.scan_commands_results?.ssl_2_0_cipher_suites?.accepted_cipher_suites?.length > 0,
+            ssl3: scanResult.scan_commands_results?.ssl_3_0_cipher_suites?.accepted_cipher_suites?.length > 0,
+            tls10: scanResult.scan_commands_results?.tls_1_0_cipher_suites?.accepted_cipher_suites?.length > 0,
+            tls11: scanResult.scan_commands_results?.tls_1_1_cipher_suites?.accepted_cipher_suites?.length > 0,
+          },
+          heartbleed: scanResult.scan_commands_results?.heartbleed?.is_vulnerable_to_heartbleed ?? false,
+          robotVuln: scanResult.scan_commands_results?.robot?.robot_result !== 'NOT_VULNERABLE_NO_ORACLE',
+        };
+      } catch {
+        return {};
+      }
+    },
+    version: '6.x',
+    priority: JobPriority.MEDIUM,
+  },
 ];
