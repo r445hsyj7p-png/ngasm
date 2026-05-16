@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { axiosInstance } from '@/services/apis/axios-client';
 import { useQuery } from '@tanstack/react-query';
 import { Globe, Loader2, Mail, MapPin, Network, User } from 'lucide-react';
+import type { ReactNode } from 'react';
 
 interface OsintFinding {
   id: string;
@@ -25,7 +26,7 @@ interface OsintFindingsProps {
   targetId: string;
 }
 
-const TYPE_META: Record<OsintFinding['type'], { label: string; icon: React.ReactNode; color: string }> = {
+const TYPE_META: Record<OsintFinding['type'], { label: string; icon: ReactNode; color: string }> = {
   email: { label: 'Email', icon: <Mail className="h-4 w-4" />, color: 'text-blue-500' },
   person: { label: 'Person', icon: <User className="h-4 w-4" />, color: 'text-purple-500' },
   virtual_host: { label: 'Virtual Host', icon: <Globe className="h-4 w-4" />, color: 'text-green-500' },
