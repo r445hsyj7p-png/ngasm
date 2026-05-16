@@ -50,6 +50,9 @@ export class SystemConfigsService implements OnModuleInit {
       logoPath: config.logoPath
         ? `${STORAGE_BASE_PATH}/${config.logoPath}`
         : null,
+      slackWebhookUrl: config.slackWebhookUrl ?? null,
+      slackAlertThreshold: config.slackAlertThreshold ?? 'high',
+      slackEnabled: config.slackEnabled ?? false,
     };
   }
 
@@ -69,6 +72,10 @@ export class SystemConfigsService implements OnModuleInit {
     if (dto.logoPath !== undefined) {
       config.logoPath = dto.logoPath; // Can be string or null
     }
+
+    if (dto.slackWebhookUrl !== undefined) config.slackWebhookUrl = dto.slackWebhookUrl;
+    if (dto.slackAlertThreshold !== undefined) config.slackAlertThreshold = dto.slackAlertThreshold;
+    if (dto.slackEnabled !== undefined) config.slackEnabled = dto.slackEnabled;
 
     await this.systemConfigRepository.save(config);
 
@@ -90,6 +97,32 @@ export class SystemConfigsService implements OnModuleInit {
       return { message: 'System logo removed successfully' };
     }
     return { message: 'No system logo to remove' };
+  }
+
+  async testSlackWebhook(webhookUrl: string): Promise<DefaultMessageResponseDto> {
+    try {
+      const body = JSON.stringify({
+        text: '✅ OASM Slack integration test successful!',
+      });
+      const res = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return { message: 'Slack webhook test successful' };
+    } catch (e) {
+      throw new Error(`Slack webhook test failed: ${e}`);
+    }
+  }
+
+  async getSlackConfig(): Promise<Pick<SystemConfig, 'slackWebhookUrl' | 'slackAlertThreshold' | 'slackEnabled'>> {
+    const config = await this.findOrCreateConfig();
+    return {
+      slackWebhookUrl: config.slackWebhookUrl,
+      slackAlertThreshold: config.slackAlertThreshold ?? 'high',
+      slackEnabled: config.slackEnabled ?? false,
+    };
   }
 
   /**

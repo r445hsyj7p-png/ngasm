@@ -1,7 +1,7 @@
 import { GetManyBaseQueryParams } from '@/common/dtos/get-many-base.dto';
 import { Asset } from '@/modules/assets/entities/assets.entity';
 import { Target } from '@/modules/targets/entities/target.entity';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
   IsBoolean,
@@ -35,6 +35,11 @@ export class SearchAssetsTargetsDto extends GetManyBaseQueryParams {
   @IsBoolean()
   @Transform(({ value }) => value === 'true')
   isSaveHistory: boolean;
+
+  @ApiPropertyOptional({ description: 'Advanced token query e.g. severity:critical has:cve' })
+  @IsOptional()
+  @IsString()
+  advancedQuery?: string;
 }
 export class SearchData {
   @ApiProperty({ type: [Asset] })

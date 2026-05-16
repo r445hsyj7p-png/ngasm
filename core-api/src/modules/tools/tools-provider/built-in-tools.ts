@@ -158,4 +158,28 @@ export const builtInTools: Tool[] = [
     version: '3.4.7',
     priority: JobPriority.LOW,
   },
+  {
+    name: 'theHarvester',
+    category: ToolCategory.OSINT,
+    description:
+      'theHarvester is an OSINT tool for gathering emails, subdomains, hosts, and employee names from public sources including Google, Bing, LinkedIn, and more.',
+    logoUrl: '/static/images/theHarvester.png',
+    command:
+      'theHarvester -d {{value}} -b google,bing,baidu,yahoo,dnsdumpster,crtsh -f /tmp/harvest-{{value}} -j && cat /tmp/harvest-{{value}}.json 2>/dev/null || echo "{}"',
+    parser: (result: string) => {
+      try {
+        const data = JSON.parse(result);
+        return {
+          hosts: (data.hosts ?? []) as string[],
+          emails: (data.emails ?? []) as string[],
+          ips: (data.ips ?? []) as string[],
+          linkedinPeople: (data.linkedin_people ?? []) as string[],
+        };
+      } catch {
+        return { hosts: [], emails: [], ips: [], linkedinPeople: [] };
+      }
+    },
+    version: '4.x',
+    priority: JobPriority.LOW,
+  },
 ];

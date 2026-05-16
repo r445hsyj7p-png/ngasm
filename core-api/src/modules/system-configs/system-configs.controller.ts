@@ -2,7 +2,7 @@ import { Roles } from '@/common/decorators/app.decorator';
 import { Doc } from '@/common/doc/doc.decorator';
 import { DefaultMessageResponseDto } from '@/common/dtos/default-message-response.dto';
 import { Role } from '@/common/enums/enum';
-import { Body, Controller, Delete, Get, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, Put } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import {
   SystemConfigResponseDto,
@@ -53,6 +53,16 @@ export class SystemConfigsController {
     @Body() dto: UpdateSystemConfigDto,
   ): Promise<DefaultMessageResponseDto> {
     return this.systemConfigsService.updateConfig(dto);
+  }
+
+  @Post('slack/test')
+  @Doc<DefaultMessageResponseDto>({
+    summary: 'Test Slack webhook',
+    description: 'Sends a test message to the configured Slack webhook',
+    response: { serialization: DefaultMessageResponseDto },
+  })
+  async testSlack(@Body() dto: { webhookUrl: string }): Promise<DefaultMessageResponseDto> {
+    return this.systemConfigsService.testSlackWebhook(dto.webhookUrl);
   }
 
   /**

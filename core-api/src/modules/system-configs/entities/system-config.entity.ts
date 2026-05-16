@@ -15,4 +15,13 @@ export class SystemConfig extends BaseEntity {
   @ApiProperty({ description: 'Path to system logo', nullable: true })
   @Column('text', { nullable: true })
   logoPath?: string | null;
+
+  @Column('text', { nullable: true })
+  slackWebhookUrl?: string | null;
+
+  @Column('text', { nullable: true, default: 'high' })
+  slackAlertThreshold?: string | null;
+
+  @Column({ default: false })
+  slackEnabled: boolean;
 }

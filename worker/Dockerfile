@@ -25,13 +25,20 @@ FROM debian:bookworm-slim
 
 WORKDIR /app
 
-# Install ca-certificates for TLS, bash, chromium for browser tasks, and libpcap for naabu
+# Install ca-certificates for TLS, bash, chromium for browser tasks, libpcap for naabu, and Python for theHarvester
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     bash \
     chromium \
     libpcap0.8 \
+    python3 \
+    python3-pip \
+    python3-venv \
+    && python3 -m venv /opt/venv \
+    && /opt/venv/bin/pip install --no-cache-dir theHarvester \
     && rm -rf /var/lib/apt/lists/*
+
+ENV PATH="/opt/venv/bin:$PATH"
 
 # Create tool directory
 RUN mkdir -p /app/oasm-tools
