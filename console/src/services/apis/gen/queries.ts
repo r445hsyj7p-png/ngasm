@@ -515,6 +515,9 @@ export const ToolCategory = {
   screenshot: 'screenshot',
   classifier: 'classifier',
   assistant: 'assistant',
+  osint: 'osint',
+  tls_analysis: 'tls_analysis',
+  mcp_vuln: 'mcp_vuln',
 } as const;
 
 export type Tool = {
