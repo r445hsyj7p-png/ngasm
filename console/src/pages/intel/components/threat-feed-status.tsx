@@ -15,6 +15,12 @@ interface FeedConfig {
   cacheTtlMinutes: number;
 }
 
+interface FeedConfigUpdate {
+  enabled?: boolean;
+  apiKey?: string;
+  cacheTtlMinutes?: number;
+}
+
 const SOURCE_META: Record<string, { label: string; description: string; needsKey: boolean }> = {
   greynoise: {
     label: 'GreyNoise',
@@ -44,7 +50,7 @@ export function ThreatFeedStatus() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (payload: { source: string; data: Partial<FeedConfig> }) =>
+    mutationFn: (payload: { source: string; data: FeedConfigUpdate }) =>
       axiosInstance.put(`/api/intel/feeds/${payload.source}`, payload.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['intel-feeds'] });
