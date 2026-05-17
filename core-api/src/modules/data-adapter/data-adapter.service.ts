@@ -17,6 +17,8 @@ import { Asset } from '../assets/entities/assets.entity';
 import { HttpResponse } from '../assets/entities/http-response.entity';
 import { Port } from '../assets/entities/ports.entity';
 import { IssuesService } from '../issues/issues.service';
+import { OsintService } from '../osint/osint.service';
+import { OsintType } from '../osint/entities/osint-finding.entity';
 import { StorageService } from '../storage/storage.service';
 import { Vulnerability } from '../vulnerabilities/entities/vulnerability.entity';
 import { WorkspacesService } from '../workspaces/workspaces.service';
@@ -28,6 +30,7 @@ export class DataAdapterService {
     private workspaceService: WorkspacesService,
     private issuesService: IssuesService,
     private storageService: StorageService,
+    private readonly osintService: OsintService,
   ) {}
 
   public async validateData<T extends object>(
@@ -350,6 +353,41 @@ export class DataAdapterService {
     return;
   }
 
+  public async osint({
+    data,
+    job,
+  }: DataAdapterInput<Record<string, unknown>>): Promise<void> {
+    if (!data || typeof data !== 'object') return;
+    const targetId = job.asset.target.id;
+    const source = job.tool.name;
+    const findings: Array<{ type: OsintType; value: string; source: string }> = [];
+
+    if (Array.isArray(data.emails)) {
+      for (const v of data.emails as string[]) {
+        if (typeof v === 'string' && v.trim()) findings.push({ type: OsintType.EMAIL, value: v.trim(), source });
+      }
+    }
+    if (Array.isArray(data.hosts)) {
+      for (const v of data.hosts as string[]) {
+        if (typeof v === 'string' && v.trim()) findings.push({ type: OsintType.SUBDOMAIN, value: v.trim(), source });
+      }
+    }
+    if (Array.isArray(data.linkedinPeople)) {
+      for (const v of data.linkedinPeople as string[]) {
+        if (typeof v === 'string' && v.trim()) findings.push({ type: OsintType.PERSON, value: v.trim(), source });
+      }
+    }
+    if (Array.isArray(data.ips)) {
+      for (const v of data.ips as string[]) {
+        if (typeof v === 'string' && v.trim()) findings.push({ type: OsintType.IP_RANGE, value: v.trim(), source });
+      }
+    }
+
+    if (findings.length > 0) {
+      await this.osintService.saveFindings(targetId, findings);
+    }
+  }
+
   /**
    * Sync data based on tool category
    * @param payload Data to sync
@@ -398,7 +436,20 @@ export class DataAdapterService {
             this.screenshot(data),
           validationClass: ScreenshotPayload,
         },
-        // Note: ASSISTANT category is handled separately or not supported in this mapping
+        [ToolCategory.OSINT]: {
+          handler: (data: DataAdapterInput<Record<string, unknown>>) =>
+            this.osint(data),
+        },
+        [ToolCategory.TLS_ANALYSIS]: {
+          // TLS results are available via rawResult on the job; no structured sink yet
+          handler: async () => { /* intentional no-op */ },
+        },
+        [ToolCategory.MCP_VULN]: {
+          // MCP vulnerability results share the same schema as nuclei vulnerabilities
+          handler: (data: DataAdapterInput<Vulnerability[]>) =>
+            this.vulnerabilities(data),
+        },
+        // Note: ASSISTANT category is handled separately
       };
 
       // Get the appropriate sync function based on category
