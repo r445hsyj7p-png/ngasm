@@ -44,7 +44,7 @@ export class IntelEnrichmentProcessor extends WorkerHost {
       if (!config) continue;
 
       try {
-        let enrichmentData: Record<string, unknown> = {};
+        let enrichmentData: object = {};
         let abuseScore: number | undefined;
         let greynoiseClassification: string | undefined;
         let otxPulseCount = 0;
@@ -52,20 +52,20 @@ export class IntelEnrichmentProcessor extends WorkerHost {
         if (source === IntelSource.GREYNOISE && assetType === 'ip') {
           const result = await this.greynoise.lookup(assetValue, config.apiKey ?? '');
           if (result) {
-            enrichmentData = result as Record<string, unknown>;
+            enrichmentData = result as unknown as object;
             greynoiseClassification = result.classification;
           }
         } else if (source === IntelSource.ABUSEIPDB && assetType === 'ip') {
           const result = await this.abuseipdb.check(assetValue, config.apiKey ?? '');
           if (result) {
-            enrichmentData = result as Record<string, unknown>;
+            enrichmentData = result as unknown as object;
             abuseScore = result.abuseConfidenceScore;
           }
         } else if (source === IntelSource.ALIENVAULT_OTX) {
           const type = assetType === 'ip' ? 'IPv4' : 'domain';
           const result = await this.otx.lookup(assetValue, type, config.apiKey);
           if (result) {
-            enrichmentData = result as Record<string, unknown>;
+            enrichmentData = result as unknown as object;
             otxPulseCount = result.pulseCount;
           }
         }

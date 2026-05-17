@@ -166,9 +166,9 @@ export const builtInTools: Tool[] = [
     logoUrl: '/static/images/theHarvester.png',
     command:
       'theHarvester -d {{value}} -b google,bing,baidu,yahoo,dnsdumpster,crtsh -f /tmp/harvest-{{value}} -j && cat /tmp/harvest-{{value}}.json 2>/dev/null || echo "{}"',
-    parser: (result: string) => {
+    parser: (result: string | undefined): Record<string, unknown> => {
       try {
-        const data = JSON.parse(result);
+        const data = JSON.parse(result ?? '{}') as Record<string, unknown[]>;
         return {
           hosts: (data.hosts ?? []) as string[],
           emails: (data.emails ?? []) as string[],
@@ -189,18 +189,18 @@ export const builtInTools: Tool[] = [
       'SSLyze is a fast and comprehensive SSL/TLS scanner. It detects outdated protocols, weak ciphers, certificate issues, and missing security headers like HSTS.',
     logoUrl: '/static/images/sslyze.png',
     command: 'sslyze --json_out=- {{value}}',
-    parser: (result: string) => {
+    parser: (result: string | undefined): Record<string, unknown> => {
       try {
-        const data = JSON.parse(result);
+        const data = JSON.parse(result ?? '{}');
         const scanResult = data?.server_scan_results?.[0];
         if (!scanResult) return {};
         return {
           certInfo: scanResult.scan_commands_results?.certificate_info ?? {},
           tlsVersions: {
-            ssl2: scanResult.scan_commands_results?.ssl_2_0_cipher_suites?.accepted_cipher_suites?.length > 0,
-            ssl3: scanResult.scan_commands_results?.ssl_3_0_cipher_suites?.accepted_cipher_suites?.length > 0,
-            tls10: scanResult.scan_commands_results?.tls_1_0_cipher_suites?.accepted_cipher_suites?.length > 0,
-            tls11: scanResult.scan_commands_results?.tls_1_1_cipher_suites?.accepted_cipher_suites?.length > 0,
+            ssl2: (scanResult.scan_commands_results?.ssl_2_0_cipher_suites?.accepted_cipher_suites?.length ?? 0) > 0,
+            ssl3: (scanResult.scan_commands_results?.ssl_3_0_cipher_suites?.accepted_cipher_suites?.length ?? 0) > 0,
+            tls10: (scanResult.scan_commands_results?.tls_1_0_cipher_suites?.accepted_cipher_suites?.length ?? 0) > 0,
+            tls11: (scanResult.scan_commands_results?.tls_1_1_cipher_suites?.accepted_cipher_suites?.length ?? 0) > 0,
           },
           heartbleed: scanResult.scan_commands_results?.heartbleed?.is_vulnerable_to_heartbleed ?? false,
           robotVuln: scanResult.scan_commands_results?.robot?.robot_result !== 'NOT_VULNERABLE_NO_ORACLE',
