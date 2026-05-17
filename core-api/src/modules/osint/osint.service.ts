@@ -46,7 +46,7 @@ export class OsintService {
       (acc, t) => ({ ...acc, [t]: 0 }),
       {} as Record<OsintType, number>,
     );
-    results.forEach((r) => (counts[r.type as OsintType] = parseInt(r.count, 10)));
+    results.forEach((r: { type: string; count: string }) => (counts[r.type as OsintType] = parseInt(r.count, 10)));
     return counts;
   }
 }

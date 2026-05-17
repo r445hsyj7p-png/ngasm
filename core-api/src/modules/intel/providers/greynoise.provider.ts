@@ -31,7 +31,7 @@ export class GreynoiseProvider {
       if (axios.isAxiosError(err) && err.response?.status === 404) {
         return { ip, noise: false, riot: false, classification: 'unknown', message: 'not found' };
       }
-      this.logger.warn(`GreyNoise lookup failed for ${ip}: ${err}`);
+      this.logger.warn(`GreyNoise lookup failed for ${ip}: ${String(err)}`);
       return null;
     }
   }

@@ -1,6 +1,5 @@
-import { WorkspaceId } from '@/common/decorators/app.decorator';
 import { Doc } from '@/common/doc/doc.decorator';
-import { Get, Controller, Param, Query } from '@nestjs/common';
+import { Get, Controller, Param } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { OsintService } from './osint.service';
 
