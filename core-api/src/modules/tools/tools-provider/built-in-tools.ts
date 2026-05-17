@@ -86,19 +86,22 @@ export const builtInTools: Tool[] = [
       'Nuclei is a fast, customizable vulnerability scanner powered by the global security community and built on a simple YAML-based DSL, enabling collaboration to tackle trending vulnerabilities on the internet. It helps you find vulnerabilities in your applications, APIs, networks, DNS, and cloud configurations.',
     logoUrl: '/static/images/nuclei.png',
     command: 'nuclei -duc -u {{value}} -j --silent',
-    parser: (result: string) => {
+    parser: (result: string | undefined): Vulnerability[] => {
+      if (!result?.trim()) return [];
       const initialVulnerabilities = result
         .split('\n')
         .filter((line) => line.trim())
         .map((line) => {
-          const finding = JSON.parse(line.trim());
+          let finding: any;
+          try { finding = JSON.parse(line.trim()); } catch { return null; }
+          if (!finding?.['info']?.['name']) return null;
           const vulId = randomUUID();
           const filePath = `${vulId}.json`;
           return {
             id: vulId,
             name: finding['info']['name'] as string,
             description: finding['info']['description'] as string,
-            severity: finding['info']['severity'].toLowerCase() as Severity,
+            severity: (finding['info']['severity'] ?? 'info').toLowerCase() as Severity,
             tags: finding['info']['tags'] || [],
             references: finding['info']['reference'] || [],
             authors: finding['info']['author'] || [],
@@ -119,7 +122,7 @@ export const builtInTools: Tool[] = [
             filePath,
           };
         })
-        .filter((v): v is NonNullable<typeof v> => v !== null);
+        .filter((v): v is NonNullable<Exclude<typeof v, null>> => v !== null);
 
       const groupedVulnerabilities = new Map<
         string,

@@ -441,10 +441,15 @@ export class DataAdapterService {
             this.osint(data),
         },
         [ToolCategory.TLS_ANALYSIS]: {
-          // TLS results are stored as raw JSON on the job; no structured sink yet
-          handler: async () => { /* no-op: results available via rawResult on the job */ },
+          // TLS results are available via rawResult on the job; no structured sink yet
+          handler: async () => { /* intentional no-op */ },
         },
-        // Note: ASSISTANT/MCP_VULN categories are handled separately
+        [ToolCategory.MCP_VULN]: {
+          // MCP vulnerability results share the same schema as nuclei vulnerabilities
+          handler: (data: DataAdapterInput<Vulnerability[]>) =>
+            this.vulnerabilities(data),
+        },
+        // Note: ASSISTANT category is handled separately
       };
 
       // Get the appropriate sync function based on category

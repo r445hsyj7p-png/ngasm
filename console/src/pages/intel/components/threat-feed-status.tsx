@@ -9,10 +9,9 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 interface FeedConfig {
-  id: string;
   source: string;
   enabled: boolean;
-  apiKey?: string;
+  hasApiKey: boolean;
   cacheTtlMinutes: number;
 }
 
@@ -94,10 +93,13 @@ export function ThreatFeedStatus() {
             </CardHeader>
             {feed.enabled && (
               <CardContent className="pt-0">
+                {feed.hasApiKey && !editKeys[feed.source] && (
+                  <p className="text-xs text-green-600 mb-2">✓ API key configured</p>
+                )}
                 <div className="flex gap-2 items-center">
                   <Input
                     type={showKey[feed.source] ? 'text' : 'password'}
-                    placeholder={`${meta.label} API Key ${meta.needsKey ? '(required)' : '(optional)'}`}
+                    placeholder={feed.hasApiKey ? 'Replace existing API key…' : `${meta.label} API Key ${meta.needsKey ? '(required)' : '(optional)'}`}
                     value={editKeys[feed.source] ?? ''}
                     onChange={(e) =>
                       setEditKeys((prev) => ({ ...prev, [feed.source]: e.target.value }))
