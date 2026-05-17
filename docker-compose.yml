@@ -163,7 +163,6 @@ services:
           memory: 512M
 
   geo-ip:
-    container_name: geo-ip
     image: ghcr.io/l1ttps/geoip-proxy:latest
     networks:
       - oasm
