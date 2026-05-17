@@ -479,6 +479,9 @@ export type SystemConfigResponseDto = {
    * @nullable
    */
   logoPath: SystemConfigResponseDtoLogoPath;
+  slackEnabled?: boolean;
+  slackWebhookUrl?: string | null;
+  slackAlertThreshold?: string | null;
 };
 
 /**
@@ -491,6 +494,9 @@ export type UpdateSystemConfigDto = {
   name?: string;
   /** Path to system logo */
   logoPath?: UpdateSystemConfigDtoLogoPath;
+  slackEnabled?: boolean;
+  slackWebhookUrl?: string | null;
+  slackAlertThreshold?: string | null;
 };
 
 export type AssetDnsRecords = { [key: string]: unknown };
