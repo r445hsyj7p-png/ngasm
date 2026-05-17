@@ -3,7 +3,7 @@ import { Doc } from '@/common/doc/doc.decorator';
 import { Role, IntelSource } from '@/common/enums/enum';
 import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { UpdateFeedConfigDto } from './dto/intel.dto';
+import { FeedConfigResponseDto, UpdateFeedConfigDto } from './dto/intel.dto';
 import { IntelService } from './intel.service';
 
 @ApiTags('Intel')
@@ -19,8 +19,14 @@ export class IntelController {
 
   @Get('feeds')
   @Doc({ summary: 'List all intel feed configurations' })
-  getFeeds() {
-    return this.intelService.getFeeds();
+  async getFeeds(): Promise<FeedConfigResponseDto[]> {
+    const configs = await this.intelService.getFeeds();
+    return configs.map((c) => ({
+      source: c.source,
+      enabled: c.enabled,
+      hasApiKey: !!c.apiKey,
+      cacheTtlMinutes: c.cacheTtlMinutes,
+    }));
   }
 
   @Put('feeds/:source')

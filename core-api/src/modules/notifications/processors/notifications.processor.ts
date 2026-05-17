@@ -62,12 +62,17 @@ export class NotificationsConsumer extends WorkerHost {
     if (type === NotificationType.VULNERABILITY_ANALYSIS_COMPLETED) {
       try {
         const slackCfg = await this.systemConfigsService.getSlackConfig();
-        if (slackCfg.slackEnabled && slackCfg.slackWebhookUrl) {
+        const eventSeverity = (metadata?.severity) ?? 'info';
+        if (
+          slackCfg.slackEnabled &&
+          slackCfg.slackWebhookUrl &&
+          this.slackChannel.meetsThreshold(eventSeverity, slackCfg.slackAlertThreshold ?? 'info')
+        ) {
           await this.slackChannel.send(slackCfg.slackWebhookUrl, {
             title: metadata?.name
-              ? `Vulnerability analysis completed for ${metadata.name}`
+              ? `Vulnerability analysis completed for ${String(metadata.name)}`
               : 'Vulnerability analysis completed',
-            severity: 'info',
+            severity: eventSeverity,
             workspace: workspaceId,
           });
         }

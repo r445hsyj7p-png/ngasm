@@ -48,7 +48,7 @@ export function PipelineProgress({ targetId }: PipelineProgressProps) {
       axiosInstance
         .get<{ id: string } | null>(`/api/jobs-registry/target/${targetId}/latest-history`)
         .then((r) => r.data),
-    refetchInterval: 5000,
+    refetchInterval: (query) => (query.state.data ? false : 5000),
     enabled: !!targetId,
   });
 
@@ -58,7 +58,12 @@ export function PipelineProgress({ targetId }: PipelineProgressProps) {
       axiosInstance
         .get<PhaseStatus[]>(`/api/jobs-registry/pipeline/${latestHistory!.id}`)
         .then((r) => r.data),
-    refetchInterval: 5000,
+    refetchInterval: (query) => {
+      const data = query.state.data as PhaseStatus[] | undefined;
+      if (!data) return 5000;
+      const isActive = data.some((p) => p.status === 'in_progress' || p.status === 'pending');
+      return isActive ? 5000 : false;
+    },
     enabled: !!latestHistory?.id,
   });
 

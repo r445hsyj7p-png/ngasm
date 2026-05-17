@@ -18,13 +18,10 @@ export class BreachRecord1780000003000 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(`
-      CREATE INDEX "IDX_breach_records_targetId" ON "breach_records" ("targetId")
-    `);
+    // UNIQUE constraint on targetId already creates a B-tree index; no separate index needed
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP INDEX "IDX_breach_records_targetId"`);
     await queryRunner.query(`DROP TABLE "breach_records"`);
   }
 }

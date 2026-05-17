@@ -49,17 +49,17 @@ export function BreachRecords() {
   const targetIds = targets?.map((t) => t.id) ?? [];
 
   const { data: breachRecords, isLoading: loadingBreaches, refetch } = useQuery({
-    queryKey: ['breach-records', targetIds],
+    queryKey: ['breach-records', selectedWorkspaceId],
     queryFn: async () => {
-      const results: (BreachRecord & { targetValue: string })[] = [];
-      for (const target of targets ?? []) {
-        const record = await axiosInstance
-          .get<BreachRecord | null>(`/api/hibp/target/${target.id}`)
-          .then((r) => r.data)
-          .catch(() => null);
-        if (record) results.push({ ...record, targetValue: target.value });
-      }
-      return results;
+      const settled = await Promise.all(
+        (targets ?? []).map((target) =>
+          axiosInstance
+            .get<BreachRecord | null>(`/api/hibp/target/${target.id}`)
+            .then((r) => (r.data ? { ...r.data, targetValue: target.value } : null))
+            .catch(() => null),
+        ),
+      );
+      return settled.filter((r): r is BreachRecord & { targetValue: string } => r !== null);
     },
     enabled: targetIds.length > 0,
   });
@@ -68,7 +68,7 @@ export function BreachRecords() {
     try {
       await axiosInstance.post(`/api/hibp/target/${targetId}/check`, { domain });
       toast.success(`HIBP check queued for ${domain}`);
-      setTimeout(() => refetch(), 5000);
+      void refetch();
     } catch {
       toast.error('Failed to queue HIBP check');
     }

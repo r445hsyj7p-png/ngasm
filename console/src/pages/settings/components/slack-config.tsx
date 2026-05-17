@@ -97,7 +97,7 @@ export default function SlackConfigSettings() {
     }
     setIsTesting(true);
     try {
-      await axiosInstance.post('/system-configs/slack/test', { webhookUrl: url });
+      await axiosInstance.post('/api/system-configs/slack/test', { webhookUrl: url });
       toast.success('Test message sent to Slack');
     } catch {
       toast.error('Failed to send test message');

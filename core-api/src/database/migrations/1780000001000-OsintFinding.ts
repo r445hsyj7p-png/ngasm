@@ -24,9 +24,11 @@ export class OsintFinding1780000001000 implements MigrationInterface {
       )
     `);
     await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_osint_findings_targetId" ON "osint_findings" ("targetId")`);
+    await queryRunner.query(`CREATE UNIQUE INDEX IF NOT EXISTS "UQ_osint_findings_target_type_value" ON "osint_findings" ("targetId", "type", "value")`);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`DROP INDEX IF EXISTS "UQ_osint_findings_target_type_value"`);
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_osint_findings_targetId"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "osint_findings"`);
   }

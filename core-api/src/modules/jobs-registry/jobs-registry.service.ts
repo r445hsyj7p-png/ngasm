@@ -1095,12 +1095,14 @@ export class JobsRegistryService {
   }
 
   async getLatestJobHistoryForTarget(targetId: string): Promise<{ id: string } | null> {
-    const job = await this.repo.findOne({
-      where: { asset: { targetId } },
-      relations: ['jobHistory'],
-      order: { createdAt: 'DESC' },
-    });
-    return job?.jobHistory ? { id: job.jobHistory.id } : null;
+    const history = await this.jobHistoryRepo
+      .createQueryBuilder('jh')
+      .innerJoin('jh.jobs', 'j')
+      .innerJoin('j.asset', 'a')
+      .where('a.targetId = :targetId', { targetId })
+      .orderBy('jh.createdAt', 'DESC')
+      .getOne();
+    return history ? { id: history.id } : null;
   }
 
   async getPipelineStatus(jobHistoryId: string): Promise<PhaseStatus[]> {
@@ -1121,7 +1123,7 @@ export class JobsRegistryService {
       let status: PhaseStatus['status'] = 'not_available';
       if (phaseJobs.length > 0) {
         if (inProgress > 0) status = 'in_progress';
-        else if (failed > 0 && completed === 0) status = 'failed';
+        else if (failed > 0 && completed < phaseJobs.length) status = 'failed';
         else if (completed === phaseJobs.length) status = 'completed';
         else status = 'pending';
       }

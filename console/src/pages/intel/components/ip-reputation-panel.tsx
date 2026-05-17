@@ -47,18 +47,19 @@ export function IpReputationPanel({ targetId }: IpReputationPanelProps) {
   const assetIds = assets?.map((a) => a.id) ?? [];
 
   const { data: enrichments, isLoading: loadingEnrichments, refetch } = useQuery({
-    queryKey: ['intel-enrichments', assetIds],
+    queryKey: ['intel-enrichments', selectedWorkspaceId, targetId],
     queryFn: async () => {
-      const results: AssetWithEnrichment[] = [];
-      for (const asset of assets ?? []) {
-        const enrichmentList = await axiosInstance
-          .get<IntelEnrichment[]>(`/api/intel/asset/${asset.id}`)
-          .then((r) => r.data);
-        if (enrichmentList.length) {
-          results.push({ assetId: asset.id, assetValue: asset.value, enrichments: enrichmentList });
-        }
-      }
-      return results;
+      const settled = await Promise.all(
+        (assets ?? []).map((asset) =>
+          axiosInstance
+            .get<IntelEnrichment[]>(`/api/intel/asset/${asset.id}`)
+            .then((r) => ({ assetId: asset.id, assetValue: asset.value, enrichments: r.data }))
+            .catch(() => null),
+        ),
+      );
+      return settled.filter(
+        (r): r is AssetWithEnrichment => r !== null && r.enrichments.length > 0,
+      );
     },
     enabled: assetIds.length > 0,
   });
@@ -67,7 +68,7 @@ export function IpReputationPanel({ targetId }: IpReputationPanelProps) {
     try {
       await axiosInstance.post(`/api/intel/enrich/asset/${asset.id}`, { value: asset.value });
       toast.success(`Enrichment queued for ${asset.value}`);
-      setTimeout(() => refetch(), 3000);
+      void refetch();
     } catch {
       toast.error('Failed to queue enrichment');
     }

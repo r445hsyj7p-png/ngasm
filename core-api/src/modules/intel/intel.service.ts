@@ -9,7 +9,7 @@ import { IntelEnrichment } from './entities/intel-enrichment.entity';
 import { IntelFeedConfig } from './entities/intel-feed-config.entity';
 import { IntelEnrichmentJobData } from './processors/intel-enrichment.processor';
 
-const IP_REGEX = /^(\d{1,3}\.){3}\d{1,3}$/;
+const IP_REGEX = /^((25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)\.){3}(25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)$/;
 
 @Injectable()
 export class IntelService {

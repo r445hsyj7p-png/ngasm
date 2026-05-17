@@ -32,12 +32,10 @@ export class HibpService {
   }
 
   async triggerCheck(targetId: string, domain: string): Promise<void> {
-    const apiKey = process.env.INTEL_HIBP_API_KEY ?? '';
-    const job: HibpCheckJobData = { targetId, domain, apiKey };
+    const job: HibpCheckJobData = { targetId, domain };
     await this.hibpQueue.add('hibp-check', job, {
       attempts: 3,
       backoff: { type: 'exponential', delay: 60000 },
-      // HIBP rate limit: 10 req/min — use rate limiter via BullMQ
     });
   }
 }

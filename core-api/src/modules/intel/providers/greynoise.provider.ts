@@ -18,8 +18,9 @@ export class GreynoiseProvider {
 
   async lookup(ip: string, apiKey: string): Promise<GreynoiseResult | null> {
     try {
+      // Authenticated customers get the enterprise context endpoint; community is unauthenticated-only
       const url = apiKey
-        ? `https://api.greynoise.io/v3/community/${ip}`
+        ? `https://api.greynoise.io/v3/noise/context/${ip}`
         : `https://api.greynoise.io/v3/community/${ip}`;
 
       const headers: Record<string, string> = { 'Accept': 'application/json' };
