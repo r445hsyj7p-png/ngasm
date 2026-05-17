@@ -10,10 +10,9 @@ import { BreachRecord, HibpBreach } from '../entities/breach-record.entity';
 export interface HibpCheckJobData {
   targetId: string;
   domain: string;
-  apiKey: string;
 }
 
-@Processor(BullMQName.HIBP_CHECK)
+@Processor(BullMQName.HIBP_CHECK, { limiter: { max: 9, duration: 60000 } })
 export class HibpProcessor extends WorkerHost {
   private readonly logger = new Logger(HibpProcessor.name);
 
@@ -25,29 +24,32 @@ export class HibpProcessor extends WorkerHost {
   }
 
   async process(job: Job<HibpCheckJobData>): Promise<void> {
-    const { targetId, domain, apiKey } = job.data;
+    const { targetId, domain } = job.data;
+    const apiKey = process.env.INTEL_HIBP_API_KEY ?? '';
     if (!apiKey) {
       this.logger.warn('HIBP API key not configured, skipping check');
       return;
     }
 
     try {
+      // /breaches?domain= returns full BreachModel[] for all breaches associated with a domain
       const { data } = await axios.get<HibpBreach[]>(
-        `https://haveibeenpwned.com/api/v3/breacheddomain/${domain}`,
+        `https://haveibeenpwned.com/api/v3/breaches`,
         {
+          params: { domain },
           headers: { 'hibp-api-key': apiKey, 'user-agent': 'ngasm-oasm' },
           timeout: 15000,
         },
       );
 
       const breaches: HibpBreach[] = data.map((b) => ({
-        name: b.name ?? (b as unknown as Record<string, string>).Name,
-        domain: b.domain ?? (b as unknown as Record<string, string>).Domain,
-        breachDate: b.breachDate ?? (b as unknown as Record<string, string>).BreachDate,
-        addedDate: b.addedDate ?? (b as unknown as Record<string, string>).AddedDate,
-        dataClasses: b.dataClasses ?? (b as unknown as Record<string, string[]>).DataClasses ?? [],
-        pwnCount: b.pwnCount ?? (b as unknown as Record<string, number>).PwnCount ?? 0,
-        isVerified: b.isVerified ?? (b as unknown as Record<string, boolean>).IsVerified ?? false,
+        name: typeof b.Name === 'string' ? b.Name : (b.name ?? ''),
+        domain: typeof b.Domain === 'string' ? b.Domain : (b.domain ?? domain),
+        breachDate: typeof b.BreachDate === 'string' ? b.BreachDate : (b.breachDate ?? ''),
+        addedDate: typeof b.AddedDate === 'string' ? b.AddedDate : (b.addedDate ?? ''),
+        dataClasses: Array.isArray(b.DataClasses) ? b.DataClasses : (b.dataClasses ?? []),
+        pwnCount: typeof b.PwnCount === 'number' ? b.PwnCount : (b.pwnCount ?? 0),
+        isVerified: typeof b.IsVerified === 'boolean' ? b.IsVerified : (b.isVerified ?? false),
       }));
 
       const existing = await this.breachRepo.findOne({ where: { targetId } });

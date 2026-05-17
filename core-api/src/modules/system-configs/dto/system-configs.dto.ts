@@ -11,8 +11,13 @@ export class SystemConfigResponseDto {
   @ApiProperty({ description: 'Path to system logo', nullable: true })
   logoPath?: string | null;
 
+  @ApiPropertyOptional({ nullable: true })
   slackWebhookUrl?: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
   slackAlertThreshold?: string | null;
+
+  @ApiPropertyOptional()
   slackEnabled?: boolean;
 }
 

@@ -24,13 +24,10 @@ export class OsintService {
 
   async saveFindings(targetId: string, findings: Array<{ type: OsintType; value: string; source?: string; context?: string }>): Promise<void> {
     if (!findings.length) return;
-    // Deduplicate by value+type
-    const existing = await this.osintRepo.find({ where: { targetId }, select: ['value', 'type'] });
-    const existingKeys = new Set(existing.map((f) => `${f.type}:${f.value}`));
-    const toSave = findings.filter((f) => !existingKeys.has(`${f.type}:${f.value}`));
-    if (toSave.length > 0) {
-      await this.osintRepo.save(toSave.map((f) => ({ ...f, targetId })));
-    }
+    await this.osintRepo.upsert(
+      findings.map((f) => ({ ...f, targetId })),
+      ['targetId', 'type', 'value'],
+    );
   }
 
   async countByTarget(targetId: string): Promise<Record<OsintType, number>> {
@@ -46,7 +43,7 @@ export class OsintService {
       (acc, t) => ({ ...acc, [t]: 0 }),
       {} as Record<OsintType, number>,
     );
-    results.forEach((r) => (counts[r.type as OsintType] = parseInt(r.count, 10)));
+    results.forEach((r: { type: string; count: string }) => (counts[r.type as OsintType] = parseInt(r.count, 10)));
     return counts;
   }
 }

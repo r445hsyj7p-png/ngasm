@@ -13,6 +13,7 @@ export enum OsintType {
 
 @Entity('osint_findings')
 @Index(['targetId'])
+@Index(['targetId', 'type', 'value'], { unique: true })
 export class OsintFinding extends BaseEntity {
   @ApiProperty({ enum: OsintType })
   @Column({ type: 'enum', enum: OsintType })

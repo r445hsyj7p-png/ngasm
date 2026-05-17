@@ -3,9 +3,9 @@ import { ToolCategory } from '@/common/enums/enum';
 export enum ScanPhase {
   P1_DISCOVERY = 'P1_DISCOVERY',
   P2_PORT_SCAN = 'P2_PORT_SCAN',
+  P3_TLS = 'P3_TLS',
   P4_HTTP_PROBE = 'P4_HTTP_PROBE',
   P5_VULN_SCAN = 'P5_VULN_SCAN',
-  P3_TLS = 'P3_TLS',
   P6_MCP_ANALYSIS = 'P6_MCP_ANALYSIS',
 }
 
@@ -20,9 +20,12 @@ export const PHASE_META: Record<ScanPhase, { label: string; tool: string; order:
 
 export const CATEGORY_TO_PHASE: Partial<Record<ToolCategory, ScanPhase>> = {
   [ToolCategory.SUBDOMAINS]: ScanPhase.P1_DISCOVERY,
+  [ToolCategory.OSINT]: ScanPhase.P1_DISCOVERY,
   [ToolCategory.PORTS_SCANNER]: ScanPhase.P2_PORT_SCAN,
+  [ToolCategory.TLS_ANALYSIS]: ScanPhase.P3_TLS,
   [ToolCategory.HTTP_PROBE]: ScanPhase.P4_HTTP_PROBE,
   [ToolCategory.VULNERABILITIES]: ScanPhase.P5_VULN_SCAN,
+  [ToolCategory.MCP_VULN]: ScanPhase.P6_MCP_ANALYSIS,
 };
 
 export interface PhaseStatus {

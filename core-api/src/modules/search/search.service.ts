@@ -12,7 +12,7 @@ import {
   SearchResponseDto,
 } from './dto/search.dto';
 import { SearchHistory } from './entities/search-history.entity';
-import { QueryParser } from './query-parser';
+import { QueryParser, type ParsedQuery } from './query-parser';
 
 /**
  * Service for managing search operations and search history.
@@ -88,7 +88,7 @@ export class SearchService {
       targets: targets.data || [],
     };
 
-    let parsedTokens = null;
+    let parsedTokens: ParsedQuery | null = null;
     if (query.advancedQuery) {
       parsedTokens = this.queryParser.parse(query.advancedQuery);
     }

@@ -17,7 +17,9 @@ export function IpReputationBadge({
   const isMalicious =
     greynoiseClassification === 'malicious' || (abuseScore !== undefined && abuseScore >= 70);
   const isSuspicious =
-    greynoiseClassification === 'unknown' || (abuseScore !== undefined && abuseScore >= 30);
+    !isMalicious &&
+    greynoiseClassification !== 'benign' &&
+    (greynoiseClassification === 'unknown' || (abuseScore !== undefined && abuseScore >= 30));
 
   if (isMalicious) {
     return (

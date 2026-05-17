@@ -5,7 +5,7 @@ import {
 import { DefaultMessageResponseDto } from '@/common/dtos/default-message-response.dto';
 import { ReleaseVersion } from '@/common/interfaces/app.interface';
 import { RedisService } from '@/services/redis/redis.service';
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import axios from 'axios';
@@ -100,19 +100,25 @@ export class SystemConfigsService implements OnModuleInit {
   }
 
   async testSlackWebhook(webhookUrl: string): Promise<DefaultMessageResponseDto> {
+    let parsed: URL;
     try {
-      const body = JSON.stringify({
-        text: '✅ OASM Slack integration test successful!',
-      });
+      parsed = new URL(webhookUrl);
+    } catch {
+      throw new BadRequestException('Invalid webhook URL');
+    }
+    if (!['hooks.slack.com', 'hooks.slack-gov.com'].includes(parsed.hostname)) {
+      throw new BadRequestException('Webhook URL must point to hooks.slack.com');
+    }
+    try {
       const res = await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body,
+        body: JSON.stringify({ text: '✅ OASM Slack integration test successful!' }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return { message: 'Slack webhook test successful' };
     } catch (e) {
-      throw new Error(`Slack webhook test failed: ${e}`);
+      throw new BadRequestException(`Slack webhook test failed: ${String(e)}`);
     }
   }
 

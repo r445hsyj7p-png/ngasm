@@ -12,7 +12,7 @@ export class IntelEnrichment extends BaseEntity {
   source: IntelSource;
 
   @Column({ type: 'jsonb', default: {} })
-  data: Record<string, unknown>;
+  data: object;
 
   @Column({ type: 'int', nullable: true })
   abuseScore?: number;

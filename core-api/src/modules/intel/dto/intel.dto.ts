@@ -1,6 +1,6 @@
 import { IntelSource } from '@/common/enums/enum';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IsBoolean, IsInt, IsOptional, IsString, Min } from 'class-validator';
 
 export class UpdateFeedConfigDto {
   @ApiProperty({ required: false })

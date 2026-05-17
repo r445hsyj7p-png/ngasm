@@ -9,4 +9,5 @@ export type JobDataResultType =
   | number[]
   | Vulnerability[]
   | AssetTag[]
+  | Record<string, unknown>
   | undefined;

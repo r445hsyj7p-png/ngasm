@@ -2,6 +2,7 @@ import { BaseEntity } from '@/common/entities/base.entity';
 import { Column, Entity, Index } from 'typeorm';
 
 export interface HibpBreach {
+  // HIBP API v3 returns PascalCase; we normalise to camelCase on ingest
   name: string;
   domain: string;
   breachDate: string;
@@ -9,6 +10,14 @@ export interface HibpBreach {
   dataClasses: string[];
   pwnCount: number;
   isVerified: boolean;
+  // Raw PascalCase fields present on the API response before normalisation
+  Name?: string;
+  Domain?: string;
+  BreachDate?: string;
+  AddedDate?: string;
+  DataClasses?: string[];
+  PwnCount?: number;
+  IsVerified?: boolean;
 }
 
 @Entity('breach_records')
